@@ -1,5 +1,11 @@
+import java.util.Properties
+
 plugins {
     kotlin("jvm") version "1.9.22"
+}
+
+repositories {
+    mavenCentral()
 }
 
 subprojects {
@@ -20,10 +26,12 @@ subprojects {
     }
 }
 
+val semverVersion = "1.4.2"
+
 project(":client") {
     dependencies {
         implementation(project(":common"))
-        implementation(project(":mod-api"))
+        implementation(project(":modApi"))
         implementation(project(":server"))
     }
 }
@@ -31,13 +39,32 @@ project(":client") {
 project(":server") {
     dependencies {
         implementation(project(":common"))
-        implementation(project(":mod-api"))
+        implementation(project(":modApi"))
     }
 }
 
-project(":mod-api") {
+project(":modApi") {
     dependencies {
+        api("io.github.z4kn4fein:semver:$semverVersion")
         implementation(project(":common"))
+    }
+
+    tasks.register("generateModProperties") {
+        doLast {
+            val properties = Properties()
+            properties["name"] = Mod.INSTANCE.name
+            properties["description"] = Mod.INSTANCE.description
+            properties["modId"] = Mod.INSTANCE.modId
+            properties["version"] = Mod.INSTANCE.version
+            properties["dependencies"] = Mod.INSTANCE.dependencies
+            properties["incompatabilities"] = Mod.INSTANCE.incompatabilities
+
+            File("${layout.buildDirectory}/resources/mod.properties").outputStream().use { properties.store(it, null) }
+        }
+    }
+
+    tasks.named("build") {
+        dependsOn("generateModProperties")
     }
 }
 
