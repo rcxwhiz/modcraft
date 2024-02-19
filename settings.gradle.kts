@@ -3,3 +3,9 @@ plugins {
 }
 rootProject.name = "modcraft"
 
+include(
+    "client",
+    "server",
+    "mod-api",
+    "common"
+)

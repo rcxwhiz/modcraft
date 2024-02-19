@@ -2,54 +2,43 @@ plugins {
     kotlin("jvm") version "1.9.22"
 }
 
-group = "com.joshbedwell"
-version = "1.0-SNAPSHOT"
+subprojects {
+    apply(plugin = "kotlin")
 
-val lwjglVersion = "3.3.3"
-val lwjglNatives = Pair(
-    System.getProperty("os.name")!!,
-    System.getProperty("os.arch")!!
-).let { (name, arch) ->
-    when {
-        arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } ->
-            if (arrayOf("arm", "aarch64").any { arch.startsWith(it) })
-                "natives-linux${if (arch.contains("64") || arch.startsWith("armv8")) "-arm64" else "-arm32"}"
-            else if (arch.startsWith("ppc"))
-                "natives-linux-ppc64le"
-            else if (arch.startsWith("riscv"))
-                "natives-linux-riscv64"
-            else
-                "natives-linux"
-        arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } ->
-            "natives-macos${if (arch.startsWith("aarch64")) "-arm64" else ""}"
-        arrayOf("Windows").any { name.startsWith(it) } ->
-            if (arch.contains("64"))
-                "natives-windows${if (arch.startsWith("aarch64")) "-arm64" else ""}"
-            else
-                "natives-windows-x86"
-        else ->
-            throw Error("Unrecognized or unsupported platform. Please set \"lwjglNatives\" manually.")
+    repositories {
+        mavenCentral()
+    }
+
+    group = "com.joshbedwell"
+    version = "0.1.0"
+
+    dependencies {
+        testImplementation("org.jetbrains.kotlin:kotlin-test")
+    }
+    tasks.test {
+        useJUnitPlatform()
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-
-    implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))  // TODO idk what this does
-
-    val lwjglModules = listOf("lwjgl", "lwjgl-glfw", "lwjgl-openal", "lwjgl-opengl")  // TODO idk if these are the modules I need
-    for (module in lwjglModules) {
-        implementation("org.lwjgl", module)
-        runtimeOnly("org.lwjgl", module, classifier = lwjglNatives)
+project(":client") {
+    dependencies {
+        implementation(project(":common"))
+        implementation(project(":mod-api"))
+        implementation(project(":server"))
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
+project(":server") {
+    dependencies {
+        implementation(project(":common"))
+        implementation(project(":mod-api"))
+    }
+}
+
+project(":mod-api") {
+    dependencies {
+        implementation(project(":common"))
+    }
 }
 
 kotlin {
